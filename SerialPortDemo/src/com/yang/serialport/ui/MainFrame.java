@@ -688,7 +688,7 @@ public class MainFrame extends JFrame {
 	     					}
 	                         
 	     					try {
-								socket = new Socket("121.196.222.216", 5555);
+								socket = new Socket("192.168.23.4", 5555);
 							} catch (IOException e1) {
 								dataView.setText("服务器连接失败" + "\r\n");
 								// TODO Auto-generated catch block
