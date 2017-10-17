@@ -336,14 +336,73 @@ public class MainFrame extends JFrame {
 			ShowUtils.warningMessage("没有搜索到有效串口！");
 		} else {
 			try {
-				if(serialport!=null){
+				/*if(serialport!=null){
 					serialport.removeEventListener();
 					serialport.close();
-				}
+				}*/
 				serialport = SerialPortManager.openPort(commName, baudrate);
 				if (serialport != null) {
 					dataView.setText("串口已打开" + "\r\n");
 				}
+				
+				
+				try {
+					SerialPortManager.addListener(serialport, new SerialListener());
+				} catch (TooManyListeners e) {
+					e.printStackTrace();
+				}
+		    	
+				
+				
+				
+				Timer tExit = null; 
+				tExit = new Timer();  
+		        tExit.schedule(new TimerTask() {  
+		            @Override  
+		            public void run() { 
+						Date date=new Date();
+				    	SimpleDateFormat format = new SimpleDateFormat("yyMMddHHmmss");
+				    	String time=format.format(date);
+				    	String time1="";
+				    	String time2="";
+				    	
+				    	for (int i = 0; i < time.length()/2; i++)
+						{
+							String tstr1=time.substring(i*2, i*2+2);
+							Integer k=Integer.valueOf(tstr1).intValue();
+							time1=Integer.toHexString(k);
+							time1=time1.toUpperCase();
+							if(time1.length()==1){
+				    			time1='0'+time1;
+				        	}
+							time2+=time1;
+						}
+				    	
+				    	String data1 = "FAFFFF0804";
+				    	String data2 = time2;
+				    	String data3 = data1+data2;
+				    	int data4 = 0;
+				    	
+					     for (int i11 = 1; i11 < data3.length()/2; i11++)
+					     {
+					    	String tstr1=data3.substring(i11*2, i11*2+2);
+					    	data4+=Integer.valueOf(tstr1,16);
+					     }
+					    String data5 = ((Integer.toHexString(data4)).toUpperCase()).substring(1,3);
+				    	String data  = data1+data2+data5+"F5";
+				    	try {
+							SerialPortManager.sendToPort(serialport,
+									ByteUtils.hexStr2Byte(data));
+						} catch (SendDataToSerialPortFailure e) {
+							e.printStackTrace();
+						} catch (SerialPortOutputStreamCloseFailure e) {
+							e.printStackTrace();
+						}
+		            }  
+		        }, 0,30*100); 
+				
+				
+				
 			} catch (SerialPortParameterFailure e) {
 				e.printStackTrace();
 			} catch (NotASerialPort e) {
@@ -356,61 +415,22 @@ public class MainFrame extends JFrame {
 			}
 		}
 
+		
+		//读取数据
 		try {
-			SerialPortManager.addListener(serialport, new SerialListener());
-		} catch (TooManyListeners e) {
+			in = serialport.getInputStream();
+			// 获取buffer里的数据长度
+			int bufflenth = in.available();
+			while (bufflenth != 0) {
+				// 初始化byte数组为buffer中数据的长度
+				bytes = new byte[bufflenth];
+				in.read(bytes);
+				bufflenth = in.available();
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-    	
-		
-		
-		
-		Timer tExit = null; 
-		tExit = new Timer();  
-        tExit.schedule(new TimerTask() {  
-            @Override  
-            public void run() { 
-				Date date=new Date();
-		    	SimpleDateFormat format = new SimpleDateFormat("yyMMddHHmmss");
-		    	String time=format.format(date);
-		    	String time1="";
-		    	String time2="";
-		    	
-		    	for (int i = 0; i < time.length()/2; i++)
-				{
-					String tstr1=time.substring(i*2, i*2+2);
-					Integer k=Integer.valueOf(tstr1).intValue();
-					time1=Integer.toHexString(k);
-					time1=time1.toUpperCase();
-					if(time1.length()==1){
-		    			time1='0'+time1;
-		        	}
-					time2+=time1;
-				}
-		    	
-		    	String data1 = "FAFFFF0804";
-		    	String data2 = time2;
-		    	String data3 = data1+data2;
-		    	int data4 = 0;
-		    	
-			     for (int i11 = 1; i11 < data3.length()/2; i11++)
-			     {
-			    	String tstr1=data3.substring(i11*2, i11*2+2);
-			    	data4+=Integer.valueOf(tstr1,16);
-			     }
-			    String data5 = ((Integer.toHexString(data4)).toUpperCase()).substring(1,3);
-		    	String data  = data1+data2+data5+"F5";
-		    	try {
-					SerialPortManager.sendToPort(serialport,
-							ByteUtils.hexStr2Byte(data));
-				} catch (SendDataToSerialPortFailure e) {
-					e.printStackTrace();
-				} catch (SerialPortOutputStreamCloseFailure e) {
-					e.printStackTrace();
-				}
-            }  
-        }, 0,30*100); 
-    	
     	
     	
     	
@@ -438,22 +458,6 @@ public class MainFrame extends JFrame {
         		}
             }  
         }, 0,30*100); */
-		
-		//读取数据
-		try {
-			in = serialport.getInputStream();
-			// 获取buffer里的数据长度
-			int bufflenth = in.available();
-			while (bufflenth != 0) {
-				// 初始化byte数组为buffer中数据的长度
-				bytes = new byte[bufflenth];
-				in.read(bytes);
-				bufflenth = in.available();
-			}
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 			
 		
 		/*Timer tExit = null; 
@@ -688,7 +692,7 @@ public class MainFrame extends JFrame {
 	     					}
 	                         
 	     					try {
-								socket = new Socket("192.168.23.4", 5555);
+								socket = new Socket("192.168.9.101", 5555);
 							} catch (IOException e1) {
 								dataView.setText("服务器连接失败" + "\r\n");
 								// TODO Auto-generated catch block
