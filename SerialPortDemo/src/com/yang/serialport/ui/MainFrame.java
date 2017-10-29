@@ -17,6 +17,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -86,6 +89,7 @@ public class MainFrame extends JFrame {
     private Socket socket=null;
     private Socket websocketlink=null;
     private ServerSocket serverSocket = null;
+    public String IP;
 
 	/**
 	 * 程序界面宽度
@@ -691,8 +695,32 @@ public class MainFrame extends JFrame {
 	     						bb3[i1]=(byte)k.byteValue();
 	     					}
 	                         
+	     					
 	     					try {
-								socket = new Socket("192.168.9.101", 5555);
+	     				    	File f = new File("android.txt");   
+	     				        InputStream ing;
+	     						ing = new FileInputStream(f);
+	     				        byte[] b = new byte[1024];   
+	     				        int len = 0;   
+	     				        int temp=0;          //所有读取的内容都使用temp接收   
+	     				        try {
+	     							while((temp=ing.read())!=-1){    //当没有读取完时，继续读取   
+	     							    b[len]=(byte)temp;   
+	     							    len++;   
+	     							}
+	     						} catch (IOException e) {
+	     							// TODO Auto-generated catch block
+	     							e.printStackTrace();
+	     						} 
+	     				        IP=new String(b,0,len);
+	     					} catch (FileNotFoundException e) {
+	     						// TODO Auto-generated catch block
+	     						e.printStackTrace();
+	     					} 
+	     					
+	     					
+	     					try {
+								socket = new Socket(IP, 5555);
 							} catch (IOException e1) {
 								dataView.setText("服务器连接失败" + "\r\n");
 								// TODO Auto-generated catch block
