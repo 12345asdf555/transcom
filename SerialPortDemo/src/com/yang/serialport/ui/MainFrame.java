@@ -27,9 +27,12 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.math.BigDecimal;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.nio.ByteBuffer;
+import java.nio.channels.SocketChannel;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
@@ -120,6 +123,7 @@ public class MainFrame extends JFrame {
 	byte[] data;
 	private List<String> commList = null;
 	private SerialPort serialport;
+	private SocketChannel socketChannel = null;
 
 	public MainFrame() {
 		initView();
@@ -403,7 +407,7 @@ public class MainFrame extends JFrame {
 							e.printStackTrace();
 						}
 		            }  
-		        }, 0,30*100); 
+		        }, 0,3000); 
 				
 				
 				
@@ -641,6 +645,7 @@ public class MainFrame extends JFrame {
 				}
 			}
 	 };
+	protected String fitemid;
 	 
 	 public Runnable soctran = new Runnable() {
 			public void run() {
@@ -687,7 +692,7 @@ public class MainFrame extends JFrame {
 	                         }
 	                         response=strdata;
 	                         
-	                         byte[] bb3=new byte[strdata.length()/2];
+	                        byte[] bb3=new byte[strdata.length()/2];
 	     					for (int i1 = 0; i1 < bb3.length; i1++)
 	     					{
 	     						String tstr1=strdata.substring(i1*2, i1*2+2);
@@ -697,35 +702,76 @@ public class MainFrame extends JFrame {
 	                         
 	     					
 	     					try {
-	     				    	File f = new File("android.txt");   
-	     				        InputStream ing;
-	     						ing = new FileInputStream(f);
-	     				        byte[] b = new byte[1024];   
-	     				        int len = 0;   
-	     				        int temp=0;          //所有读取的内容都使用temp接收   
-	     				        try {
-	     							while((temp=ing.read())!=-1){    //当没有读取完时，继续读取   
-	     							    b[len]=(byte)temp;   
-	     							    len++;   
-	     							}
-	     						} catch (IOException e) {
-	     							// TODO Auto-generated catch block
-	     							e.printStackTrace();
-	     						} 
-	     				        IP=new String(b,0,len);
+	     						FileInputStream in = new FileInputStream("IPconfig.txt");  
+	     			            InputStreamReader inReader = new InputStreamReader(in, "UTF-8");  
+	     			            BufferedReader bufReader = new BufferedReader(inReader);  
+	     			            String line = null; 
+	     			            int writetime=0;
+	     						
+	     					    while((line = bufReader.readLine()) != null){ 
+	     					    	if(writetime==0){
+	     				                IP=line;
+	     				                writetime++;
+	     					    	}
+	     					    	else{
+	     					    		fitemid=line;
+	     					    		writetime=0;
+	     					    	}
+	     			            }  
+
 	     					} catch (FileNotFoundException e) {
 	     						// TODO Auto-generated catch block
 	     						e.printStackTrace();
+	     					} catch (IOException e) {
+	     						// TODO Auto-generated catch block
+	     						e.printStackTrace();
 	     					} 
+	     					   
+	     		            try {    
+	     		            	if(socketChannel==null){
+	     		            		socketChannel = SocketChannel.open(); 
+		     		                SocketAddress socketAddress = new InetSocketAddress(IP, 5555);    
+		     		                socketChannel.connect(socketAddress);
+	     		            	}
+	     		                
+	     		            	if(fitemid.length()!=2){
+	     		            		int count = 2-fitemid.length();
+	     		            		for(int i=0;i<count;i++){
+	     		            			fitemid="0"+fitemid;
+	     		            		}
+	     		            	}
+	     		            	
+	     		            	strdata=strdata.substring(0,106)+fitemid+"F5";
+	     		            	
+	     		                SendAndReceiveUtil.sendData(socketChannel, strdata); 
+	     		                
+	     		                dataView.append(strdata + "\r\n");
+	     		                    
+	     		                /*String msg = SendAndReceiveUtil.receiveData(socketChannel);    
+	     		                if(msg != null) 
+	     		                	System.out.println(msg);*/
+  
+	     		            
+	     		            } catch (Exception ex) {    
+	     		                ex.printStackTrace();  
+	     		            } /*finally {    
+	     		                try {            
+	     		                    socketChannel.close();    
+	     		                } catch(Exception ex) {  
+	     		                    ex.printStackTrace();  
+	     		                }    
+	     		            }*/
 	     					
+	     					/*if(socket==null){
+	     						try {
+									socket = new Socket(IP, 5555);
+								} catch (IOException e1) {
+									dataView.setText("服务器连接失败" + "\r\n" + e1 + "\r\n");
+									// TODO Auto-generated catch block
+									e1.printStackTrace();
+								}
+	     					}
 	     					
-	     					try {
-								socket = new Socket(IP, 5555);
-							} catch (IOException e1) {
-								dataView.setText("服务器连接失败" + "\r\n");
-								// TODO Auto-generated catch block
-								e1.printStackTrace();
-							}
 	                        
 	                        if(socket!=null){
 	                        	System.out.print("服务器连接成功"+ "\r\n");
@@ -749,413 +795,27 @@ public class MainFrame extends JFrame {
 	
 	                        // 步骤3：发送数据到服务端
 	                        outputStream.flush();
-	
-	                        socket.close();
+	                        
+	                       
 	     		           
 	                    } catch (IOException e1) {
 	                        e1.printStackTrace();
-	                    }
+	                    }*/
 						}
-					} 
+					}
 				}catch (Exception e) {
 
 					}
 				
-				/*String o="FE24";
-                String p="00000000FD";
-                String l="";
 				try {
-					ResultSet rs = stmt.executeQuery( "select * from Tenghan;" );
-					while ( rs.next() ) {
-				         String electricity = rs.getString("electricity");
-				         String voltage = rs.getString("voltage");
-				         String sensor_Num  = rs.getString("sensor_Num");
-				         String machine_id = rs.getString("machine_id");
-				         String welder_id = rs.getString("welder_id");
-				         String code = rs.getString("code");
-				         String year = rs.getString("year");
-				         String month = rs.getString("month");
-				         String day = rs.getString("day");
-				         String hour = rs.getString("hour");
-				         String minute = rs.getString("minute");
-				         String second = rs.getString("second");
-				         String status = rs.getString("status");
-				         
-				         l = l + o + electricity + voltage + sensor_Num 
-	                        		+ machine_id + welder_id + code + year 
-	                        		+ month + day + hour + minute + second + status + p;
-				         
-				         String sql = "update Tenghan set status = 01";   
-	                        //执行SQL   
-				         stmt.executeUpdate(sql);
-				         
-					}
-					
-					byte[] bb3=new byte[l.length()/2];
-					for (int i1 = 0; i1 < bb3.length; i1++)
-					{
-						String tstr1=l.substring(i1*2, i1*2+2);
-						Integer k=Integer.valueOf(tstr1, 16);
-						String s = String.valueOf(k);
-						if(s.length()==1){
-							s="0"+s;
-						}
-						bb3[i1]=(byte)k.byteValue();
-					}
-                    
-					 try {
-							socket = new Socket("192.168.8.109", 5555);
-						} catch (IOException e1) {
-							// TODO Auto-generated catch block
-							e1.printStackTrace();
-							System.out.print("socket didn't connect");
-						}
-                        
-                        boolean j=socket.isConnected();
-                        if(j){
-                        	dataView.setText("socket已打开" + "\r\n");
-                        	System.out.print("服务器连接成功");
-                        }
-                        else{
-                        	System.out.print("服务器连接失败");
-                        }
-					
-                    try {
-                    	//发送消息
-                        // 步骤1：从Socket 获得输出流对象OutputStream
-                        // 该对象作用：发送数据
-                        outputStream = socket.getOutputStream();
-
-                        // 步骤2：写入需要发送的数据到输出流对象中
-                        dataView.setText(l + "\r\n");
-                        outputStream.write(bb3);
-                        // 特别注意：数据的结尾加上换行符才可让服务器端的readline()停止阻塞
-
-                        // 步骤3：发送数据到服务端
-                        outputStream.flush();
-
-     		           
-                    } catch (IOException e1) {
-                        e1.printStackTrace();
-                    }
-				} catch (SQLException e1) {
+					Thread.sleep(50);
+				} catch (InterruptedException e) {
 					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}*/
-			}
-	 };
-	 
-	 
-	 /*public Runnable websocketstart = new Runnable() {
-		 private boolean hasHandshake = false;  
-	        private PrintWriter getWriter(Socket socket) throws IOException {  
-	            OutputStream socketOut = socket.getOutputStream();  
-	            return new PrintWriter(socketOut, true);  
-	        }  
-			public void run() {
-			
-				//建立websocket连接
-				try {
-					
-					System.out.println("S: Connecting...");  
-					
-					if(serverSocket==null){
-						
-						serverSocket = new ServerSocket(SERVERPORT);
-						
-						websocketlink = serverSocket.accept();  
-						  
-						System.out.println("S: Receiving...");  
-		
-						
-						//获取socket输入流信息  
-		                InputStream in = websocketlink.getInputStream(); 
-		                
-		                PrintWriter pw = getWriter(websocketlink);
-		                
-		                //读入缓存(定义一个1M的缓存区)  
-		                byte[] buf = new byte[1024]; 
-		                
-		                //读到字节（读取输入流数据到缓存）  
-		                int len = in.read(buf, 0, 1024);
-		                
-		                //读到字节数组（定义一个容纳数据大小合适缓存区）  
-		                byte[] res = new byte[len];  
-		                
-		                //将buf内中数据拷贝到res中  
-		                System.arraycopy(buf, 0, res, 0, len); 
-		                
-		                //打印res缓存内容  
-		                String key = new String(res);  
-		                if(!hasHandshake && key.indexOf("Key") > 0){  
-		                    //握手  
-		                    //通过字符串截取获取key值  
-		                    key = key.substring(0, key.indexOf("==") + 2);  
-		                    key = key.substring(key.indexOf("Key") + 4, key.length()).trim();  
-		                    //拼接WEBSOCKET传输协议的安全校验字符串  
-		                    key+= "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";  
-		                    //通过SHA-1算法进行更新  
-		                    MessageDigest md = null;
-							try {
-								md = MessageDigest.getInstance("SHA-1");
-							} catch (NoSuchAlgorithmException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}    
-		                    md.update(key.getBytes("utf-8"), 0, key.length());  
-		                    byte[] sha1Hash = md.digest();    
-		                    //进行Base64加密  
-		                    sun.misc.BASE64Encoder encoder = new sun.misc.BASE64Encoder();    
-		                    key = encoder.encode(sha1Hash); 
-		                    pw.println("HTTP/1.1 101 Switching Protocols");  
-		                    pw.println("Upgrade: websocket");  
-		                    pw.println("Connection: Upgrade");  
-		                    pw.println("Sec-WebSocket-Accept: " + key);  
-		                    pw.println();  
-		                    pw.flush();  
-		                    //将握手标志更新，只握一次  
-		                    hasHandshake = true;  
-		    				
-		                }
-
-	                }
-					
-				} catch (IOException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				} finally{
-					
-    				if(websocketlink!=null){
-
-    					new Thread(websocket).start();
-    					
-    				}
-    				
+					e.printStackTrace();
 				}
 				
 			}
 	 };
-	 
-	 
-	 
-	 public Runnable websocket = new Runnable() {
-			public void run() {
-				Session session;
-				String strdata = "";
-				String strsend = "";
-			    String response;
-				try {
-					
-    					if (serialport == null) {
-    						ShowUtils.errorMessage("串口对象为空！监听失败！");
-    					}
-    					else{
-    						
-    						if(data==null){
-    							
-    						}
-    						else
-    						{	
-    							
-    							//串口数据处理
-    							for(int i=0;i<data.length;i++){
-    	                         	
-    	                         	//判断为数字还是字母，若为字母+256取正数
-    	                         	if(data[i]<0){
-    	                         		String r = Integer.toHexString(data[i]+256);
-    	                         		String rr=r.toUpperCase();
-    	                             	//数字补为两位数
-    	                             	if(rr.length()==1){
-    	                         			rr='0'+rr;
-    	                             	}
-    	                             	//strdata为总接收数据
-    	                         		strdata += rr;
-    	                         		
-    	                         	}
-    	                         	else{
-    	                         		String r = Integer.toHexString(data[i]);
-    	                             	if(r.length()==1)
-    	                         			r='0'+r;
-    	                             	r=r.toUpperCase();
-    	                         		strdata+=r;	
-    	                         		
-    	                         	}
-    	                         }
-    	                             
-    							 String weldname = strdata.substring(10,14);
-    							 String welder=strdata.substring(14,18);
-    	    					 String electricity1=strdata.substring(26,30);
-    	    					 String voltage1=strdata.substring(30,34);
-    	    					 String status1=strdata.substring(38,40);
-    	                         
-    	    					 String electricity2=strdata.substring(52,56);
-    	    					 String voltage2=strdata.substring(56,60);
-    	    					 String status2=strdata.substring(64,66);
-    	    					 
-    	    					 String electricity3=strdata.substring(78,82);
-    	    					 String voltage3=strdata.substring(82,86);
-    	    					 String status3=strdata.substring(90,92);
-    	    					 
-    	                         DB_Connection a =new DB_Connection();
-    	                         
-    	                         String dbdata = a.getId();
-    	                         
-    	                         for(int i=0;i<dbdata.length();i+=12){
-		                        	 String status=dbdata.substring(0+i,2+i);
-		                        	 String framework=dbdata.substring(2+i,4+i);
-	    	                         String weld=dbdata.substring(4+i,8+i); 
-	    	                         String position=dbdata.substring(8+i,12+i);
-	    	                         if(weldname.equals(weld)){
-	    	                        	 strsend+=status1+framework+weld+position+welder+electricity1+voltage1
-	    	                        			 +status2+framework+weld+position+welder+electricity2+voltage2
-	    	                        			 +status3+framework+weld+position+welder+electricity3+voltage3;
-	    	                         }
-	    	                         else{
-	    	                        	 strsend+=status+framework+weld+position+"0000"+"0000"+"0000"
-	    	                        			 +status+framework+weld+position+"0000"+"0000"+"0000"
-	    	                        			 +status+framework+weld+position+"0000"+"0000"+"0000";
-	    	                         }
-    	                         }
-                 
-    	                        //数据发送
-    	                        byte[] bb3=strsend.getBytes();
-    		                      
-    							ByteBuffer byteBuf = ByteBuffer.allocate(bb3.length);
-    							
-    							for(int j=0;j<bb3.length;j++){
-    								byteBuf.put(bb3[j]);
-    							}
-    							byteBuf.flip();
-    	                        
-    	                        //将内容返回给客户端  
-    	                        responseClient(byteBuf, true, websocketlink); 
-    	                        
-    	                        dataView.setText("实时数据发送" + "\r\n");
-    	                        System.out.println("实时数据已发送");
-		    					
-    						}
-    					}
-  
-	                
-					
-	                
-	                    
-	                byte[] first = new byte[1];  
-                    //这里会阻塞  
-                    int read = in.read(first, 0, 1);  
-                    //读取第一个字节是否有值,开始接收数据  
-                    while(read > 0){  
-                        //让byte和十六进制做与运算（二进制也就是11111111）  
-                        //获取到第一个字节的数值  
-                        int b = first[0] & 0xFF;  
-                        //1为字符数据，8为关闭socket（只要低四位的值判断）  
-                        byte opCode = (byte) (b & 0x0F);  
-                        if(opCode == 8){  
-                            socket.getOutputStream().close();  
-                            break;  
-                        }  
-                        b = in.read();  
-                        //只能描述127  
-                        int payloadLength = b & 0x7F;  
-                        if (payloadLength == 126) {  
-                            byte[] extended = new byte[2];  
-                            in.read(extended, 0, 2);  
-                            int shift = 0;  
-                            payloadLength = 0;  
-                            for (int i = extended.length - 1; i >= 0; i--) {  
-                                payloadLength = payloadLength + ((extended[i] & 0xFF) << shift);  
-                                shift += 2;  
-                            }  
-                        } else if (payloadLength == 127) {  
-                            byte[] extended = new byte[8];  
-                            in.read(extended, 0, 8);  
-                            int shift = 0;  
-                            payloadLength = 0;  
-                            for (int i = extended.length - 1; i >= 0; i--) {  
-                                payloadLength = payloadLength + ((extended[i] & 0xFF) << shift);  
-                                shift += 8;  
-                            }  
-                        }  
-                        //掩码  
-                        byte[] mask = new byte[4];  
-                        in.read(mask, 0, 4);  
-                        int readThisFragment = 1;  
-                        ByteBuffer byteBuf = ByteBuffer.allocate(payloadLength + 30);  
-                        byteBuf.put("浏览器: ".getBytes("UTF-8"));  
-                        while(payloadLength > 0){  
-                             int masked = in.read();  
-                             masked = masked ^ (mask[(int) ((readThisFragment - 1) % 4)] & 0xFF);  
-                             byteBuf.put((byte) masked);  
-                             payloadLength--;  
-                             readThisFragment++;  
-                        }  
-                        byteBuf.flip();  
-                        //将内容返回给客户端  
-                        responseClient(byteBuf, true, socket);  
-                        //打印内容    
-                        in.read(first, 0, 1);  
-                    }  
-                    
-                    
-                }
-					
-					String b="FE115555555555555555550EFD";
-				    byte[] bb=new byte[b.length()/2];
-
-					for (int i = 0; i < bb.length; i++)
-					{
-						String tstr1=b.substring(i*2, i*2+2);
-						Integer k=Integer.valueOf(tstr1, 16);
-						bb[i]=(byte)k.byteValue();
-					}
-					responseClient(bb,true,socket);
-					
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					try {
-						websocketlink.close();
-					} catch (IOException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					} 
-					dataView.setText("实时数据发送失败" + "\r\n");
-					System.out.println("实时数据发送失败");
-					e.printStackTrace();
-				}
-			}
-	 };
-	 
-	 public void responseClient(ByteBuffer byteBuf, boolean finalFragment,Socket socket) throws IOException {  
-         OutputStream out = websocketlink.getOutputStream();  
-         int first = 0x00;  
-         //是否是输出最后的WebSocket响应片段  
-             if (finalFragment) {  
-                 first = first + 0x80;  
-                 first = first + 0x1;  
-             }  
-             out.write(first);  
-             if (byteBuf.limit() < 126) {  
-                 out.write(byteBuf.limit());  
-             } else if (byteBuf.limit() < 65536) {  
-             out.write(126);  
-             out.write(byteBuf.limit() >>> 8);  
-             out.write(byteBuf.limit() & 0xFF);  
-             } else {  
-             // Will never be more than 2^31-1  
-             out.write(127);  
-             out.write(0);  
-             out.write(0);  
-             out.write(0);  
-             out.write(0);  
-             out.write(byteBuf.limit() >>> 24);  
-             out.write(byteBuf.limit() >>> 16);  
-             out.write(byteBuf.limit() >>> 8);  
-             out.write(byteBuf.limit() & 0xFF);  
-             }  
-             // Write the content  
-             out.write(byteBuf.array(), 0, byteBuf.limit());  
-             out.flush();  
-     }  */
- 
+				
  }  
 	 
