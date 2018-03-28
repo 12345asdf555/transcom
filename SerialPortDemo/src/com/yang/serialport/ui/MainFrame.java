@@ -697,7 +697,7 @@ public class MainFrame extends JFrame {
 	                         
 	     					
 	     					try {
-	     				    	File f = new File("android.txt");   
+	     				    	File f = new File("IPconfig.txt");   
 	     				        InputStream ing;
 	     						ing = new FileInputStream(f);
 	     				        byte[] b = new byte[1024];   
