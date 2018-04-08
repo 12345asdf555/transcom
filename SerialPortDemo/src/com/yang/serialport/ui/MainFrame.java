@@ -690,60 +690,59 @@ public class MainFrame extends JFrame {
 	                         		
 	                         	}
 	                         }
-	                         response=strdata;
-	                         
-	                        byte[] bb3=new byte[strdata.length()/2];
-	     					for (int i1 = 0; i1 < bb3.length; i1++)
-	     					{
-	     						String tstr1=strdata.substring(i1*2, i1*2+2);
-	     						Integer k=Integer.valueOf(tstr1, 16);
-	     						bb3[i1]=(byte)k.byteValue();
-	     					}
-	                         
-	     					
-	     					try {
-	     						FileInputStream in = new FileInputStream("IPconfig.txt");  
-	     			            InputStreamReader inReader = new InputStreamReader(in, "UTF-8");  
-	     			            BufferedReader bufReader = new BufferedReader(inReader);  
-	     			            String line = null; 
-	     			            int writetime=0;
-	     						
-	     					    while((line = bufReader.readLine()) != null){ 
-	     					    	if(writetime==0){
-	     				                IP=line;
-	     				                writetime++;
-	     					    	}
-	     					    	else{
-	     					    		fitemid=line;
-	     					    		writetime=0;
-	     					    	}
-	     			            }  
-
-	     					} catch (FileNotFoundException e) {
-	     						// TODO Auto-generated catch block
-	     						e.printStackTrace();
-	     					} catch (IOException e) {
-	     						// TODO Auto-generated catch block
-	     						e.printStackTrace();
-	     					} 
-	     					   
+							 
 	     		            try {    
 	     		            	if(socketChannel==null){
+	     		            		
+	     		            		try {
+	    	     						FileInputStream in = new FileInputStream("IPconfig.txt");  
+	    	     			            InputStreamReader inReader = new InputStreamReader(in, "UTF-8");  
+	    	     			            BufferedReader bufReader = new BufferedReader(inReader);  
+	    	     			            String line = null; 
+	    	     			            int writetime=0;
+	    	     						
+	    	     					    while((line = bufReader.readLine()) != null){ 
+	    	     					    	if(writetime==0){
+	    	     				                IP=line;
+	    	     				                writetime++;
+	    	     					    	}
+	    	     					    	else{
+	    	     					    		fitemid=line;
+	    	     					    		writetime=0;
+	    	     					    	}
+	    	     			            }  
+
+	    	     					} catch (FileNotFoundException e) {
+	    	     						// TODO Auto-generated catch block
+	    	     						e.printStackTrace();
+	    	     					} catch (IOException e) {
+	    	     						// TODO Auto-generated catch block
+	    	     						e.printStackTrace();
+	    	     					} 
+	    	     					   
+	    	     					if(fitemid.length()!=2){
+	         		            		int count = 2-fitemid.length();
+	         		            		for(int i=0;i<count;i++){
+	         		            			fitemid="0"+fitemid;
+	         		            		}
+	         		            	}
+	     		            		
 	     		            		socketChannel = SocketChannel.open(); 
 		     		                SocketAddress socketAddress = new InetSocketAddress(IP, 5555);    
 		     		                socketChannel.connect(socketAddress);
 	     		            	}
-	     		                
-	     		            	if(fitemid.length()!=2){
-	     		            		int count = 2-fitemid.length();
-	     		            		for(int i=0;i<count;i++){
-	     		            			fitemid="0"+fitemid;
-	     		            		}
-	     		            	}
 	     		            	
 	     		            	strdata=strdata.substring(0,106)+fitemid+"F5";
 	     		            	
-	     		                SendAndReceiveUtil.sendData(socketChannel, strdata); 
+	     		            	byte[] data=new byte[strdata.length()/2];
+	     		                 for (int i1 = 0; i1 < data.length; i1++)
+	     		                 {
+	     		                   String tstr1=strdata.substring(i1*2, i1*2+2);
+	     		                   Integer k=Integer.valueOf(tstr1, 16);
+	     		                   data[i1]=(byte)k.byteValue();
+	     		                 }
+	     		            	
+	     		                socketChannel.write(ByteBuffer.wrap(data));
 	     		                
 	     		                dataView.append(strdata + "\r\n");
 	     		                    
@@ -752,8 +751,9 @@ public class MainFrame extends JFrame {
 	     		                	System.out.println(msg);*/
   
 	     		            
-	     		            } catch (Exception ex) {    
-	     		                ex.printStackTrace();  
+	     		            } catch (Exception ex) {  
+	     		            	dataView.setText("服务器未开启" + "\r\n");
+	     		            	socketChannel = null;  
 	     		            } /*finally {    
 	     		                try {            
 	     		                    socketChannel.close();    
