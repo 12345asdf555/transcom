@@ -9,6 +9,18 @@ package com.yang.serialport.ui;
 import gnu.io.SerialPort;
 import gnu.io.SerialPortEvent;
 import gnu.io.SerialPortEventListener;
+import io.netty.bootstrap.Bootstrap;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
+import io.netty.handler.codec.LengthFieldPrepender;
+import io.netty.handler.codec.string.StringDecoder;
+import io.netty.handler.codec.string.StringEncoder;
+import io.netty.util.CharsetUtil;
 
 import java.awt.Color;
 import java.awt.GraphicsEnvironment;
@@ -32,7 +44,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
-import java.nio.channels.SocketChannel;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
@@ -47,6 +58,7 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -83,7 +95,8 @@ import org.sqlite.*;
 import com.yang.serialport.ui.*;
 
 public class MainFrame extends JFrame {
-	 
+	public Client client = new Client(this);
+	public TcpClientHandler TC = new TcpClientHandler();
 	Connection c = null;
     Statement stmt = null;
     // 输出流对象
@@ -123,15 +136,16 @@ public class MainFrame extends JFrame {
 	byte[] data;
 	private List<String> commList = null;
 	private SerialPort serialport;
-	private SocketChannel socketChannel = null;
+	public SocketChannel SocketCli = null;
 
 	public MainFrame() {
+		new Thread(cli).start();
 		initView();
 		initComponents();
 		actionListener();
 		initData();
 		
-		//创建数据库
+		/*//创建数据库
 	    try {
 	      Class.forName("org.sqlite.JDBC");
 	      c = DriverManager.getConnection("jdbc:sqlite:Sqlite.db");
@@ -157,9 +171,18 @@ public class MainFrame extends JFrame {
 	      System.out.println("create table successfully");
 	    }catch ( Exception e ) {
 	    	System.out.println("The table has exist");
-		    }
+		}*/
 	}
 
+	public Runnable cli =new Runnable(){
+
+		@Override
+		public void run() {
+			// TODO Auto-generated method stub
+			client.run();
+		 }
+	};
+	
 	private void initView() {
 		// 关闭程序
 		setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -650,6 +673,8 @@ public class MainFrame extends JFrame {
 	 public Runnable soctran = new Runnable() {
 			public void run() {
 				
+				Bootstrap c = client.bootstrap;
+				
 				String strdata = "";
 				String insql;
 			    // 接收服务器发送过来的消息
@@ -692,9 +717,8 @@ public class MainFrame extends JFrame {
 	                         }
 							 
 	     		            try {    
-	     		            	if(socketChannel==null){
-	     		            		
-	     		            		try {
+	     		            	if(SocketCli!=null){
+	     		            		/*try {
 	    	     						FileInputStream in = new FileInputStream("IPconfig.txt");  
 	    	     			            InputStreamReader inReader = new InputStreamReader(in, "UTF-8");  
 	    	     			            BufferedReader bufReader = new BufferedReader(inReader);  
@@ -729,20 +753,20 @@ public class MainFrame extends JFrame {
 	     		            		
 	     		            		socketChannel = SocketChannel.open(); 
 		     		                SocketAddress socketAddress = new InetSocketAddress(IP, 5555);    
-		     		                socketChannel.connect(socketAddress);
+		     		                socketChannel.connect(socketAddress);*/
 	     		            	}
 	     		            	
 	     		            	strdata=strdata.substring(0,106)+fitemid+"F5";
 	     		            	
-	     		            	byte[] data=new byte[strdata.length()/2];
+	     		            	/*byte[] data=new byte[strdata.length()/2];
 	     		                 for (int i1 = 0; i1 < data.length; i1++)
 	     		                 {
 	     		                   String tstr1=strdata.substring(i1*2, i1*2+2);
 	     		                   Integer k=Integer.valueOf(tstr1, 16);
 	     		                   data[i1]=(byte)k.byteValue();
-	     		                 }
+	     		                 }*/
 	     		            	
-	     		                socketChannel.write(ByteBuffer.wrap(data));
+	     		                SocketCli.writeAndFlush(strdata).sync();
 	     		                
 	     		                dataView.append(strdata + "\r\n");
 	     		                    
@@ -753,7 +777,7 @@ public class MainFrame extends JFrame {
 	     		            
 	     		            } catch (Exception ex) {  
 	     		            	dataView.setText("服务器未开启" + "\r\n");
-	     		            	socketChannel = null;  
+	     		            	SocketCli = null;  
 	     		            } /*finally {    
 	     		                try {            
 	     		                    socketChannel.close();    
