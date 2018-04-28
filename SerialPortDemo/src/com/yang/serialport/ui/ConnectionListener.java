@@ -30,6 +30,7 @@ public class ConnectionListener implements ChannelFutureListener {
 		      }, 1L, TimeUnit.SECONDS);  
 		    }else{
 				  client.mainFrame.SocketCli = socketChannel;
+				  System.out.println(socketChannel);
 			}  
 		  }  
 	}

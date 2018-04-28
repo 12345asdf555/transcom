@@ -137,6 +137,7 @@ public class MainFrame extends JFrame {
 	private List<String> commList = null;
 	private SerialPort serialport;
 	public SocketChannel SocketCli = null;
+	public String fitemid;
 
 	public MainFrame() {
 		new Thread(cli).start();
@@ -353,6 +354,39 @@ public class MainFrame extends JFrame {
 		byte[] order = null;
 		InputStream in = null;
 		byte[] bytes = null;
+		
+		try {
+				FileInputStream in1 = new FileInputStream("IPconfig.txt");  
+	            InputStreamReader inReader = new InputStreamReader(in1, "UTF-8");  
+	            BufferedReader bufReader = new BufferedReader(inReader);  
+	            String line = null; 
+	            int writetime=0;
+				
+			    while((line = bufReader.readLine()) != null){ 
+			    	if(writetime==0){
+		                IP=line;
+		                writetime++;
+			    	}
+			    	else{
+			    		fitemid=line;
+			    		writetime=0;
+			    	}
+	            }  
+
+			} catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} 
+			   
+			if(fitemid.length()!=2){
+     		int count = 2-fitemid.length();
+     		for(int i=0;i<count;i++){
+     			fitemid="0"+fitemid;
+     		}
+     	}
 		
 		
 		//打开串口
@@ -668,7 +702,6 @@ public class MainFrame extends JFrame {
 				}
 			}
 	 };
-	protected String fitemid;
 	 
 	 public Runnable soctran = new Runnable() {
 			public void run() {
@@ -777,7 +810,7 @@ public class MainFrame extends JFrame {
 	     		            
 	     		            } catch (Exception ex) {  
 	     		            	dataView.setText("服务器未开启" + "\r\n");
-	     		            	SocketCli = null;  
+	     		            	ex.printStackTrace();
 	     		            } /*finally {    
 	     		                try {            
 	     		                    socketChannel.close();    
