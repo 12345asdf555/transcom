@@ -106,6 +106,7 @@ public class MainFrame extends JFrame {
     private Socket websocketlink=null;
     private ServerSocket serverSocket = null;
     public String IP;
+    public Timer tExit = null; 
 
 	/**
 	 * 程序界面宽度
@@ -336,6 +337,7 @@ public class MainFrame extends JFrame {
 	 */
 	private void closeSerialPort(java.awt.event.ActionEvent evt) {
 		serialport.removeEventListener();
+		tExit.cancel();
 		SerialPortManager.closePort(serialport);
 		dataView.setText("串口已关闭" + "\r\n");
 		serialPortOperate.setText("关闭串口");
@@ -382,11 +384,11 @@ public class MainFrame extends JFrame {
 			} 
 			   
 			if(fitemid.length()!=2){
-     		int count = 2-fitemid.length();
-     		for(int i=0;i<count;i++){
-     			fitemid="0"+fitemid;
-     		}
-     	}
+	     		int count = 2-fitemid.length();
+	     		for(int i=0;i<count;i++){
+	     			fitemid="0"+fitemid;
+	     		}
+	     	}
 		
 		
 		//打开串口
@@ -417,10 +419,6 @@ public class MainFrame extends JFrame {
 					e.printStackTrace();
 				}
 		    	
-				
-				
-				
-				Timer tExit = null; 
 				tExit = new Timer();  
 		        tExit.schedule(new TimerTask() {  
 		            @Override  
@@ -750,8 +748,8 @@ public class MainFrame extends JFrame {
 	                         }
 							 
 	     		            try {    
-	     		            	if(SocketCli!=null){
-	     		            		/*try {
+	     		            	/*if(SocketCli!=null){
+	     		            		try {
 	    	     						FileInputStream in = new FileInputStream("IPconfig.txt");  
 	    	     			            InputStreamReader inReader = new InputStreamReader(in, "UTF-8");  
 	    	     			            BufferedReader bufReader = new BufferedReader(inReader);  
@@ -786,8 +784,8 @@ public class MainFrame extends JFrame {
 	     		            		
 	     		            		socketChannel = SocketChannel.open(); 
 		     		                SocketAddress socketAddress = new InetSocketAddress(IP, 5555);    
-		     		                socketChannel.connect(socketAddress);*/
-	     		            	}
+		     		                socketChannel.connect(socketAddress);
+	     		            	}*/
 	     		            	
 	     		            	strdata=strdata.substring(0,106)+fitemid+"F5";
 	     		            	
