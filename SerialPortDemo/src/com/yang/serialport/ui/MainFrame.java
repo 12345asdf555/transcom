@@ -139,13 +139,201 @@ public class MainFrame extends JFrame {
 	private SerialPort serialport;
 	public SocketChannel SocketCli = null;
 	public String fitemid;
+	public int count;
 
 	public MainFrame() {
 		new Thread(cli).start();
+		
 		initView();
 		initComponents();
 		actionListener();
 		initData();
+		
+		//测试模拟焊机
+		/*try {
+			Thread.sleep(1000);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
+		
+		tExit = new Timer();  
+        tExit.schedule(new TimerTask() {  
+            @Override  
+            public void run() {
+            	
+            	Date timetran;
+            	long timetran1;
+            	Date time11;
+            	long timetran2;
+            	Date time22;
+            	long timetran3;
+            	Date time33;
+            	
+            	timetran = new Date();
+            	timetran1 = timetran.getTime();
+                time11 = new Date(timetran1);
+                timetran2 = timetran1 + 1000;
+                time22 = new Date(timetran2);
+                timetran3 = timetran2 + 1000;
+                time33 = new Date(timetran3);
+                
+                String time1 = DateTools.format("yyMMddHHmmss", time11);
+                String time2 = DateTools.format("yyMMddHHmmss", time22);
+                String time3 = DateTools.format("yyMMddHHmmss", time33);
+                
+                String year1 = time1.substring(0,2);
+                String year161 = Integer.toHexString(Integer.valueOf(year1));
+                year161=year161.toUpperCase();
+                if(year161.length()==1){
+                	year161='0'+year161;
+              	}
+                String month1 = time1.substring(2,4);
+                String month161 = Integer.toHexString(Integer.valueOf(month1));
+                month161=month161.toUpperCase();
+                if(month161.length()==1){
+                	month161='0'+month161;
+              	}
+                String day1 = time1.substring(4,6);
+                String day161 = Integer.toHexString(Integer.valueOf(day1));
+                day161=day161.toUpperCase();
+                if(day161.length()==1){
+                	day161='0'+day161;
+              	}
+                String hour1 = time1.substring(6,8);
+                String hour161 = Integer.toHexString(Integer.valueOf(hour1));
+                hour161=hour161.toUpperCase();
+                if(hour161.length()==1){
+                	hour161='0'+hour161;
+              	}
+                String minute1 = time1.substring(8,10);
+                String minute161 = Integer.toHexString(Integer.valueOf(minute1));
+                minute161=minute161.toUpperCase();
+                if(minute161.length()==1){
+                	minute161='0'+minute161;
+              	}
+                String second1 = time1.substring(10,12);
+                String second161 = Integer.toHexString(Integer.valueOf(second1));
+                second161=second161.toUpperCase();
+                if(second161.length()==1){
+                	second161='0'+second161;
+              	}
+                
+                String year2 = time2.substring(0,2);
+                String year162 = Integer.toHexString(Integer.valueOf(year2));
+                year162=year162.toUpperCase();
+                if(year162.length()==1){
+                	year162='0'+year162;
+              	}
+                String month2 = time2.substring(2,4);
+                String month162 = Integer.toHexString(Integer.valueOf(month2));
+                month162=month162.toUpperCase();
+                if(month162.length()==1){
+                	month162='0'+month162;
+              	}
+                String day2 = time2.substring(4,6);
+                String day162 = Integer.toHexString(Integer.valueOf(day2));
+                day162=day162.toUpperCase();
+                if(day162.length()==1){
+                	day162='0'+day162;
+              	}
+                String hour2 = time2.substring(6,8);
+                String hour162 = Integer.toHexString(Integer.valueOf(hour2));
+                hour162=hour162.toUpperCase();
+                if(hour162.length()==1){
+                	hour162='0'+hour162;
+              	}
+                String minute2 = time2.substring(8,10);
+                String minute162 = Integer.toHexString(Integer.valueOf(minute2));
+                minute162=minute162.toUpperCase();
+                if(minute162.length()==1){
+                	minute162='0'+minute162;
+              	}
+                String second2 = time2.substring(10,12);
+                String second162 = Integer.toHexString(Integer.valueOf(second2));
+                second162=second162.toUpperCase();
+                if(second162.length()==1){
+                	second162='0'+second162;
+              	}
+                
+                String year3 = time3.substring(0,2);
+                String year163 = Integer.toHexString(Integer.valueOf(year3));
+                year163=year163.toUpperCase();
+                if(year163.length()==1){
+                	year163='0'+year163;
+              	}
+                String month3 = time3.substring(2,4);
+                String month163 = Integer.toHexString(Integer.valueOf(month3));
+                month163=month163.toUpperCase();
+                if(month163.length()==1){
+                	month163='0'+month163;
+              	}
+                String day3 = time3.substring(4,6);
+                String day163 = Integer.toHexString(Integer.valueOf(day3));
+                day163=day163.toUpperCase();
+                if(day163.length()==1){
+                	day163='0'+day163;
+              	}
+                String hour3 = time3.substring(6,8);
+                String hour163 = Integer.toHexString(Integer.valueOf(hour3));
+                hour163=hour163.toUpperCase();
+                if(hour163.length()==1){
+                	hour163='0'+hour163;
+              	}
+                String minute3 = time3.substring(8,10);
+                String minute163 = Integer.toHexString(Integer.valueOf(minute3));
+                minute163=minute163.toUpperCase();
+                if(minute163.length()==1){
+                	minute163='0'+minute163;
+              	}
+                String second3 = time3.substring(10,12);
+                String second163 = Integer.toHexString(Integer.valueOf(second3));
+                second163=second163.toUpperCase();
+                if(second163.length()==1){
+                	second163='0'+second163;
+              	}
+		    	
+              //FA000031010009000100000011007B00A400000311091D0C050C007B00A500000311091D14050C007B00A400000311091D14050CC0F5
+                
+                String datesend = "000031010009000100000011007B00A4000003" + year161 + month161 + day161 + hour161 + minute161 + second161
+                		+ "007B00A5000003" + year162 + month162 + day162 + hour162 + minute162 + second162
+                		+ "007B00A4000003" + year163 + month163 + day163 + hour163 + minute163 + second163;
+                          
+                int check = 0;
+                byte[] data1=new byte[datesend.length()/2];
+    			for (int i = 0; i < data1.length; i++)
+    			{
+    				String tstr1=datesend.substring(i*2, i*2+2);
+    				Integer k=Integer.valueOf(tstr1, 16);
+    				check += k;
+    			}
+
+    			String checksend = Integer.toHexString(check);
+    			int a = checksend.length();
+    			checksend = checksend.substring(a-2,a);
+    			checksend = checksend.toUpperCase();
+    			
+    			datesend = "FA" + datesend + checksend + "F5";
+    			datesend = datesend.toUpperCase();
+    			
+    			try {
+					SocketCli.writeAndFlush(datesend).sync();
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+    			
+    			count++;
+    			System.out.println(count);
+    			
+    			if(count == 1200){
+    				tExit.cancel();
+    				System.out.println("Done");
+    			}
+            }  
+        }, 0,3000); */
 		
 		/*//创建数据库
 	    try {
@@ -796,8 +984,13 @@ public class MainFrame extends JFrame {
 	     		                   Integer k=Integer.valueOf(tstr1, 16);
 	     		                   data[i1]=(byte)k.byteValue();
 	     		                 }*/
-	     		            	
-	     		                SocketCli.writeAndFlush(strdata).sync();
+	     		            	try{
+	     		            		SocketCli.writeAndFlush(strdata).sync();
+	     		            	} catch (Exception ex) {  
+		     		            	dataView.setText("服务器未开启" + "\r\n");
+		     		            	ex.printStackTrace();
+		     		            }
+	     		                
 	     		                
 	     		                dataView.append(strdata + "\r\n");
 	     		                    
@@ -807,7 +1000,6 @@ public class MainFrame extends JFrame {
   
 	     		            
 	     		            } catch (Exception ex) {  
-	     		            	dataView.setText("服务器未开启" + "\r\n");
 	     		            	ex.printStackTrace();
 	     		            } /*finally {    
 	     		                try {            
