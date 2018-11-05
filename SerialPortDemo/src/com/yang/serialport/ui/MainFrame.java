@@ -69,6 +69,9 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.websocket.CloseReason;
 import javax.websocket.OnClose;
 import javax.websocket.OnError;
@@ -139,6 +142,7 @@ public class MainFrame extends JFrame {
 	private SerialPort serialport;
 	public SocketChannel SocketCli = null;
 	public String fitemid;
+	private String com;
 	public int count;
 
 	public MainFrame() {
@@ -148,6 +152,7 @@ public class MainFrame extends JFrame {
 		initComponents();
 		actionListener();
 		initData();
+		sendData();
 		
 		//测试模拟焊机
 		/*try {
@@ -391,6 +396,36 @@ public class MainFrame extends JFrame {
 	private void initComponents() {
 		// 数据显示
 		dataView.setFocusable(false);
+		dataView.getDocument().addDocumentListener(new DocumentListener(){
+			@Override
+			public void insertUpdate(DocumentEvent e) {
+				// TODO Auto-generated method stub
+				SwingUtilities.invokeLater(new Runnable(){
+					@Override
+					public void run() {
+						// TODO Auto-generated method stub
+						if(dataView.getLineCount() >= 1000){
+							int end = 0;
+							try{
+								end = dataView.getLineEndOffset(500);
+							}catch (Exception e) {  
+                            }  
+							dataView.replaceRange("", 0, end);
+						}
+					}
+				});
+			}
+			@Override
+			public void removeUpdate(DocumentEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+			@Override
+			public void changedUpdate(DocumentEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+		});
 		scrollDataView.setBounds(10, 10, 475, 200);
 		add(scrollDataView);
 
@@ -439,15 +474,11 @@ public class MainFrame extends JFrame {
 			ShowUtils.warningMessage("没有搜索到有效串口！");
 		} else {
 			for (String s : commList) {
-				commChoice.addItem(s);
+				//commChoice.addItem(s);
 			}
 		}
 
-		baudrateChoice.addItem("9600");
-		baudrateChoice.addItem("19200");
 		baudrateChoice.addItem("38400");
-		baudrateChoice.addItem("57600");
-		baudrateChoice.addItem("115200");
 	}
 
 	private void actionListener() {
@@ -464,13 +495,13 @@ public class MainFrame extends JFrame {
 			}
 		});
 
-		sendData.addActionListener(new ActionListener() {
+		/*sendData.addActionListener(new ActionListener() {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				sendData(e);
 			}
-		});
+		});*/
 	}
 
 
@@ -533,11 +564,12 @@ public class MainFrame extends JFrame {
 
 	/**
 	 * 发送数据
+	 * @param e 
 	 * 
 	 * @param evt
 	 *            点击事件
 	 */
-	private void sendData(java.awt.event.ActionEvent evt) {
+	private void sendData() {
 		
 		//初始化
 		OutputStream out = null;
@@ -546,37 +578,42 @@ public class MainFrame extends JFrame {
 		byte[] bytes = null;
 		
 		try {
-				FileInputStream in1 = new FileInputStream("IPconfig.txt");  
-	            InputStreamReader inReader = new InputStreamReader(in1, "UTF-8");  
-	            BufferedReader bufReader = new BufferedReader(inReader);  
-	            String line = null; 
-	            int writetime=0;
-				
-			    while((line = bufReader.readLine()) != null){ 
-			    	if(writetime==0){
-		                IP=line;
-		                writetime++;
-			    	}
-			    	else{
-			    		fitemid=line;
-			    		writetime=0;
-			    	}
-	            }  
+			FileInputStream in1 = new FileInputStream("IPconfig.txt");  
+            InputStreamReader inReader = new InputStreamReader(in1, "UTF-8");  
+            BufferedReader bufReader = new BufferedReader(inReader);  
+            String line = null; 
+            int writetime=0;
+			
+		    while((line = bufReader.readLine()) != null){ 
+		    	if(writetime==0){
+	                IP=line;
+	                writetime++;
+		    	}
+		    	else if(writetime==1){
+		    		fitemid=line;
+		    		writetime++;
+		    	}else{
+		    		com=line;
+		    		writetime=0;
 
-			} catch (FileNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} 
-			   
-			if(fitemid.length()!=2){
-	     		int count = 2-fitemid.length();
-	     		for(int i=0;i<count;i++){
-	     			fitemid="0"+fitemid;
-	     		}
-	     	}
+		    		commChoice.addItem(com);
+		    	}
+            }  
+
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} 
+		   
+		if(fitemid.length()!=2){
+     		int count = 2-fitemid.length();
+     		for(int i=0;i<count;i++){
+     			fitemid="0"+fitemid;
+     		}
+     	}
 		
 		
 		//打开串口
@@ -791,8 +828,24 @@ public class MainFrame extends JFrame {
 						e1.printStackTrace();
 					}
 					
+					int length = 0;
+					int count = 0;
+					for(int i=0;i<data.length;i++){
+						if(data[i] == -11){
+							length = i - length * count + 1;
+							if(length>54 || length==54){
+								byte[] databuf = new byte[length];
+								for(int j=0;j<length;j++){
+									databuf[j] = data[j+i-length+1];
+								}
+								//soctran = new soctran(databuf,client,fitemid,SocketCli,dataView);
+								new Thread(new soctran(databuf,client,fitemid,SocketCli,dataView)).start();
+								count++;
+							}
+						}
+					}
+					
 					//new Thread(sqlite).start();
-					new Thread(soctran).start();
 					//new Thread(websocketstart).start();
 				
 				
@@ -808,7 +861,7 @@ public class MainFrame extends JFrame {
 		});
 	}
 	
-	 public Runnable sqlite = new Runnable() {
+	public Runnable sqlite = new Runnable() {
 			public void run() {
 				String strdata = "";
 				String insql;
@@ -975,7 +1028,15 @@ public class MainFrame extends JFrame {
 		     		                socketChannel.connect(socketAddress);
 	     		            	}*/
 	     		            	
-	     		            	strdata=strdata.substring(0,106)+fitemid+"F5";
+	     		            	//数字化焊机
+	     		            	if(strdata.length() == 168){
+	     		            		strdata=strdata.substring(0,166)+fitemid+"F5";
+	     		            	}
+	     		            	
+	     		            	//核五旧正常
+	     		            	if(strdata.length() == 108){
+	     		            		strdata=strdata.substring(0,106)+fitemid+"F5";
+	     		            	}
 	     		            	
 	     		            	/*byte[] data=new byte[strdata.length()/2];
 	     		                 for (int i1 = 0; i1 < data.length; i1++)
@@ -986,13 +1047,12 @@ public class MainFrame extends JFrame {
 	     		                 }*/
 	     		            	try{
 	     		            		SocketCli.writeAndFlush(strdata).sync();
+	     		            		dataView.append(strdata + "\r\n");
 	     		            	} catch (Exception ex) {  
 		     		            	dataView.setText("服务器未开启" + "\r\n");
 		     		            	ex.printStackTrace();
 		     		            }
 	     		                
-	     		                
-	     		                dataView.append(strdata + "\r\n");
 	     		                    
 	     		                /*String msg = SendAndReceiveUtil.receiveData(socketChannel);    
 	     		                if(msg != null) 
@@ -1065,4 +1125,202 @@ public class MainFrame extends JFrame {
 	 };
 				
  }  
-	 
+	
+	class soctran implements Runnable {
+
+		private byte[] data;
+		private Client client;
+		private String fitemid;
+		private SocketChannel SocketCli;
+		private JTextArea dataView;
+
+		public soctran(byte[] databuf, Client client1) {
+			// TODO Auto-generated constructor stub
+			
+		}
+
+		public soctran(byte[] databuf, Client client1, String fitemid1, SocketChannel SocketCli1, JTextArea dataView1) {
+			// TODO Auto-generated constructor stub
+			data = databuf;
+			client = client1;
+			fitemid = fitemid1;
+			SocketCli = SocketCli1;
+			dataView = dataView1;
+		}
+
+		@Override
+		public void run() {
+			// TODO Auto-generated method stub
+			Bootstrap c = client.bootstrap;
+			
+			String strdata = "";
+			String insql;
+		    // 接收服务器发送过来的消息
+		    String response;
+			
+			try {
+					
+				if(data==null){
+					
+				}
+				else
+				{			
+					 for(int i=0;i<data.length;i++){
+                     	
+                     	//判断为数字还是字母，若为字母+256取正数
+                     	if(data[i]<0){
+                     		String r = Integer.toHexString(data[i]+256);
+                     		String rr=r.toUpperCase();
+                         	//数字补为两位数
+                         	if(rr.length()==1){
+                     			rr='0'+rr;
+                         	}
+                         	//strdata为总接收数据
+                     		strdata += rr;
+                     		
+                     	}
+                     	else{
+                     		String r = Integer.toHexString(data[i]);
+                         	if(r.length()==1)
+                     			r='0'+r;
+                         	r=r.toUpperCase();
+                     		strdata+=r;	
+                     		
+                     	}
+                     }
+					 
+ 		            try {    
+ 		            	/*if(SocketCli!=null){
+ 		            		try {
+	     						FileInputStream in = new FileInputStream("IPconfig.txt");  
+	     			            InputStreamReader inReader = new InputStreamReader(in, "UTF-8");  
+	     			            BufferedReader bufReader = new BufferedReader(inReader);  
+	     			            String line = null; 
+	     			            int writetime=0;
+	     						
+	     					    while((line = bufReader.readLine()) != null){ 
+	     					    	if(writetime==0){
+	     				                IP=line;
+	     				                writetime++;
+	     					    	}
+	     					    	else{
+	     					    		fitemid=line;
+	     					    		writetime=0;
+	     					    	}
+	     			            }  
+
+	     					} catch (FileNotFoundException e) {
+	     						// TODO Auto-generated catch block
+	     						e.printStackTrace();
+	     					} catch (IOException e) {
+	     						// TODO Auto-generated catch block
+	     						e.printStackTrace();
+	     					} 
+	     					   
+	     					if(fitemid.length()!=2){
+     		            		int count = 2-fitemid.length();
+     		            		for(int i=0;i<count;i++){
+     		            			fitemid="0"+fitemid;
+     		            		}
+     		            	}
+ 		            		
+ 		            		socketChannel = SocketChannel.open(); 
+     		                SocketAddress socketAddress = new InetSocketAddress(IP, 5555);    
+     		                socketChannel.connect(socketAddress);
+ 		            	}*/
+ 		            	
+ 		            	//数字化焊机
+ 		            	if(strdata.length() == 168){
+ 		            		strdata=strdata.substring(0,166)+fitemid+"F5";
+ 		            	}
+ 		            	
+ 		            	//核五旧正常
+ 		            	if(strdata.length() == 108){
+ 		            		strdata=strdata.substring(0,106)+fitemid+"F5";
+ 		            	}
+ 		            	
+ 		            	/*byte[] data=new byte[strdata.length()/2];
+ 		                 for (int i1 = 0; i1 < data.length; i1++)
+ 		                 {
+ 		                   String tstr1=strdata.substring(i1*2, i1*2+2);
+ 		                   Integer k=Integer.valueOf(tstr1, 16);
+ 		                   data[i1]=(byte)k.byteValue();
+ 		                 }*/
+ 		            	try{
+ 		            		SocketCli.writeAndFlush(strdata).sync();
+ 		            		dataView.append(strdata + "\r\n");
+ 		            	} catch (Exception ex) {  
+     		            	dataView.setText("服务器未开启" + "\r\n");
+     		            	ex.printStackTrace();
+     		            }
+ 		                
+ 		                    
+ 		                /*String msg = SendAndReceiveUtil.receiveData(socketChannel);    
+ 		                if(msg != null) 
+ 		                	System.out.println(msg);*/
+
+ 		            
+ 		            } catch (Exception ex) {  
+ 		            	ex.printStackTrace();
+ 		            } /*finally {    
+ 		                try {            
+ 		                    socketChannel.close();    
+ 		                } catch(Exception ex) {  
+ 		                    ex.printStackTrace();  
+ 		                }    
+ 		            }*/
+ 					
+ 					/*if(socket==null){
+ 						try {
+							socket = new Socket(IP, 5555);
+						} catch (IOException e1) {
+							dataView.setText("服务器连接失败" + "\r\n" + e1 + "\r\n");
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
+						}
+ 					}
+ 					
+                    
+                    if(socket!=null){
+                    	System.out.print("服务器连接成功"+ "\r\n");
+                    }
+                    else{
+                    	dataView.setText("服务器连接失败" + "\r\n");
+                    	System.out.print("服务器连接失败"+ "\r\n");
+                    }
+				
+                try {
+                	//发送消息
+                    // 步骤1：从Socket 获得输出流对象OutputStream
+                    // 该对象作用：发送数据
+                    outputStream = socket.getOutputStream();
+
+                    // 步骤2：写入需要发送的数据到输出流对象中
+					dataView.append(ByteUtils.byteArrayToHexString(data,
+							true) + "\r\n");
+                    outputStream.write(bb3);
+                    // 特别注意：数据的结尾加上换行符才可让服务器端的readline()停止阻塞
+
+                    // 步骤3：发送数据到服务端
+                    outputStream.flush();
+                    
+                   
+ 		           
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }*/
+				}
+			}catch (Exception e) {
+				e.getStackTrace();
+			}
+			
+			try {
+				Thread.sleep(50);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+		}
+	}
+
