@@ -60,7 +60,7 @@ public class Client
 		    	}
 		    	else{
 		    		fitemid=line;
-		    		writetime=0;
+		    		writetime++;
 		    	}
           }  
 

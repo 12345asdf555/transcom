@@ -144,6 +144,8 @@ public class MainFrame extends JFrame {
 	public String fitemid;
 	private String com;
 	public int count;
+	public boolean first = true;
+	public byte[] datashort;
 
 	public MainFrame() {
 		new Thread(cli).start();
@@ -800,54 +802,121 @@ public class MainFrame extends JFrame {
 				}
 				
 				
-				 InputStream in1 = null;
+				InputStream in1 = null;
+				
+				/*try {
+					in1 = serialport.getInputStream();
+					//获取buffer里的数据长度
+					int bufflenth = in1.available();
+
+					while (bufflenth > 0 && (bufflenth > 54 || bufflenth == 54)) {                             
+		                data = new byte[54];    //初始化byte数组为buffer中数据的长度
+		                try {
+							in1.read(data);
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+		                new Thread(new soctran(data,client,fitemid,SocketCli,dataView)).start();
+		                bufflenth = bufflenth-54;
+		            }
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}*/
 				
 				//读取串口数据处理
-					try {
-							in1 = serialport.getInputStream();
-						//获取buffer里的数据长度
-							int bufflenth = in1.available();
-	
-							while (bufflenth != 0) {                             
-				                data = new byte[bufflenth];    //初始化byte数组为buffer中数据的长度
-				                try {
-									in1.read(data);
-								} catch (IOException e) {
-									// TODO Auto-generated catch block
-									e.printStackTrace();
-								}
-				                try {
-									bufflenth = in1.available();
-								} catch (IOException e) {
-									// TODO Auto-generated catch block
-									e.printStackTrace();
-								}
-				            }
-					} catch (IOException e1) {
+				try {
+					in1 = serialport.getInputStream();
+					//获取buffer里的数据长度
+					int bufflenth = in1.available();
+                             
+	                data = new byte[bufflenth];    //初始化byte数组为buffer中数据的长度
+	                try {
+						in1.read(data,0,bufflenth);
+					} catch (IOException e) {
 						// TODO Auto-generated catch block
-						e1.printStackTrace();
+						e.printStackTrace();
 					}
-					
-					int length = 0;
-					int count = 0;
-					for(int i=0;i<data.length;i++){
-						if(data[i] == -11){
-							length = i - length * count + 1;
-							if(length>54 || length==54){
-								byte[] databuf = new byte[length];
-								for(int j=0;j<length;j++){
-									databuf[j] = data[j+i-length+1];
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+				
+				int length = 0;
+				int count = 0;
+				
+				for(int i=0;i<data.length;i++){
+					if(first){
+						if(data[i] == -6 && (data.length - i > 54 || data.length - i == 54)){
+							byte[] databuf = new byte[54];
+							for(int j=0;j<54;j++){
+								databuf[j] = data[j+i];
+							}
+							new Thread(new soctran(databuf,client,fitemid,SocketCli,dataView)).start();
+							i = i + 53;
+						}else{
+							datashort = new byte[data.length - i];
+							for(int j=0;j<data.length-i;j++){
+								datashort[j] = data[j+i];
+							}
+						}
+						first = false;
+					}else{
+						if(data[i] == -6 && (data.length - i > 54 || data.length - i == 54)){
+							byte[] databuf = new byte[54];
+							for(int j=0;j<54;j++){
+								databuf[j] = data[j+i];
+							}
+							new Thread(new soctran(databuf,client,fitemid,SocketCli,dataView)).start();
+							i = i + 53;
+						}else{
+							if(datashort == null || datashort.length == 0){
+								datashort = new byte[data.length - i];
+								for(int j=0;j<data.length-i;j++){
+									datashort[j] = data[j+i];
 								}
-								//soctran = new soctran(databuf,client,fitemid,SocketCli,dataView);
-								new Thread(new soctran(databuf,client,fitemid,SocketCli,dataView)).start();
-								count++;
+								i = i + datashort.length - 1; 
+							}else{
+								try{
+									if(data[i + 54-datashort.length - 1] == -11){
+										byte[] databuf = new byte[54];
+										for(int k=0;k<datashort.length;k++){
+											databuf[k] = datashort[k];
+										}
+										for(int l=0;l<54-datashort.length;l++){
+											databuf[l+datashort.length] = data[l];
+										}
+										new Thread(new soctran(databuf,client,fitemid,SocketCli,dataView)).start();
+										i = i + 54-datashort.length - 1;
+										datashort = null;
+									}
+								}catch(Exception e){
+									datashort = null;
+								}
 							}
 						}
 					}
-					
-					//new Thread(sqlite).start();
-					//new Thread(websocketstart).start();
+				}
 				
+				/*for(int i=0;i<data.length;i++){
+					if(data[i] == -11){
+						length = i - length * count + 1;
+						if(length>54 || length==54){
+							byte[] databuf = new byte[length];
+							for(int j=0;j<length;j++){
+								databuf[j] = data[j+i-length+1];
+							}
+							//soctran = new soctran(databuf,client,fitemid,SocketCli,dataView);
+							new Thread(new soctran(databuf,client,fitemid,SocketCli,dataView)).start();
+							count++;
+						}
+					}
+				}*/
+				
+				//new Thread(sqlite).start();
+				//new Thread(websocketstart).start();
+			
 				
 			}
 		}
