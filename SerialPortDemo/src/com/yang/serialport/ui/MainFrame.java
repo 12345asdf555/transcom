@@ -635,6 +635,7 @@ public class MainFrame extends JFrame {
 					serialport.close();
 				}*/
 				serialport = SerialPortManager.openPort(commName, baudrate);
+				serialport.setInputBufferSize(2048);
 				if (serialport != null) {
 					dataView.setText("串口已打开" + "\r\n");
 				}
@@ -825,6 +826,15 @@ public class MainFrame extends JFrame {
 					e1.printStackTrace();
 				}*/
 				
+				try {
+					Thread.sleep(2900);
+					//FA00003101000100010000000100130011000003120B1800000000130011000003120B1800000000130011000003120B180000001AF5
+					//FA00003101000100010000000100130011000003120B1800000000130011000003120B1800000000130011000003120B180000001aF5
+				} catch (InterruptedException e2) {
+					// TODO Auto-generated catch block
+					e2.printStackTrace();
+				}
+				
 				//读取串口数据处理
 				try {
 					in1 = serialport.getInputStream();
@@ -855,15 +865,13 @@ public class MainFrame extends JFrame {
 							}
 							new Thread(new soctran(databuf,client,fitemid,SocketCli,dataView)).start();
 							i = i + 53;
-						}else{
-							datashort = new byte[data.length - i];
-							for(int j=0;j<data.length-i;j++){
-								datashort[j] = data[j+i];
-							}
 						}
 						first = false;
 					}else{
 						if(data[i] == -6 && (data.length - i > 54 || data.length - i == 54)){
+							if(datashort != null && datashort.length != 0){
+								datashort = null;
+							}
 							byte[] databuf = new byte[54];
 							for(int j=0;j<54;j++){
 								databuf[j] = data[j+i];
@@ -888,11 +896,27 @@ public class MainFrame extends JFrame {
 											databuf[l+datashort.length] = data[l];
 										}
 										new Thread(new soctran(databuf,client,fitemid,SocketCli,dataView)).start();
-										i = i + 54-datashort.length - 1;
+										int len = datashort.length;
 										datashort = null;
+										i = i + 54-len - 1;
+									}else{
+										for(int i1=0;i1<data.length;i1++){
+											if(data[i1] == -11){
+												i = i + i1;
+												break;
+											}
+										}
 									}
 								}catch(Exception e){
-									datashort = null;
+									byte[] buf = datashort;
+									datashort = new byte[datashort.length+data.length];
+									for(int i1=0;i1<(buf.length);i1++){
+										datashort[i1] = buf[i1];
+									}
+									for(int i1=0;i1<data.length;i1++){
+										datashort[i1+buf.length] = data[i1];
+									}
+									i = i + data.length - 1;
 								}
 							}
 						}
